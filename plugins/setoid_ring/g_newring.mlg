@@ -19,10 +19,16 @@ open Stdarg
 open Tacarg
 open Pcoq.Constr
 open Pltac
+open Ltac_plugin.G_rewrite
 
 }
 
 DECLARE PLUGIN "newring_plugin"
+
+VERNAC COMMAND EXTEND AddParametricRing CLASSIFIED AS SIDEFF
+  | [ "Add" "Blabla" "Relation2" binders(b) ":" constr(a) ] ->
+      { () }
+END
 
 TACTIC EXTEND protect_fv
 | [ "protect_fv" string(map) "in" ident(id) ] ->

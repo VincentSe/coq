@@ -633,13 +633,13 @@ let process_ring_mods env evd bl l =
     | Sign_spec t -> set_once "sign" sign t
     | Div_spec t -> set_once "div" div t) l;
   let k = match !kind with Some k -> k | None -> Abstract in
-  (k, !set, !cst_tac, !pre, !post, !power, !sign, !div)
+  (env, evd, k, !set, !cst_tac, !pre, !post, !power, !sign, !div)
 
 let add_theory id rth l =
   let env = Global.env () in
   let evd = Evd.from_env env in
   let (evd, rth) = ic env evd rth in
-  let (k,set,cst,pre,post,power,sign, div) = process_ring_mods env evd [] l in
+  let (env,evd,k,set,cst,pre,post,power,sign, div) = process_ring_mods env evd [] l in
   add_theory0 env evd id (evd, rth) set k cst (pre,post) power sign div
 
 (*****************************************************************************)

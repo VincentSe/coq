@@ -141,9 +141,7 @@ let ic c =
   let c, uctx = Constrintern.interp_constr env sigma c in
   (Evd.from_ctx uctx, c)
 
-let ic_unsafe c = (*FIXME remove *)
-  let env = Global.env() in
-  let sigma = Evd.from_env env in
+let ic_unsafe env sigma c = (*FIXME remove *)
   fst (Constrintern.interp_constr env sigma c)
 
 let decl_constant na univs c =
@@ -541,7 +539,7 @@ let interp_power env evdref pow =
         | CstTac t -> Tacintern.glob_tactic t
         | Closed lc ->
             closed_term_ast (List.map Smartlocate.global_with_alias lc) in
-      let spec = make_hyp env evdref (ic_unsafe spec) in
+      let spec = make_hyp env evdref (ic_unsafe env !evdref spec) in
       (tac, plapp evdref coq_Some [|carrier; spec|])
 
 let interp_sign env evdref sign =
@@ -550,7 +548,7 @@ let interp_sign env evdref sign =
   match sign with
   | None -> plapp evdref coq_None [|carrier|]
   | Some spec ->
-      let spec = make_hyp env evdref (ic_unsafe spec) in
+      let spec = make_hyp env evdref (ic_unsafe env !evdref spec) in
       plapp evdref coq_Some [|carrier;spec|]
        (* Same remark on ill-typed terms ... *)
 
@@ -560,7 +558,7 @@ let interp_div env evdref div =
   match div with
   | None -> plapp evdref coq_None [|carrier|]
   | Some spec ->
-      let spec = make_hyp env evdref (ic_unsafe spec) in
+      let spec = make_hyp env evdref (ic_unsafe env !evdref spec) in
       plapp evdref coq_Some [|carrier;spec|]
        (* Same remark on ill-typed terms ... *)
 
@@ -615,16 +613,16 @@ let add_theory0 name (sigma, rth) eqth morphth cst_tac (pre,post) power sign div
           ring_post_tac = posttac }) in
   ()
 
-let ic_coeff_spec = function
-  | Computational t -> Computational (ic_unsafe t)
-  | Morphism t -> Morphism (ic_unsafe t)
+let ic_coeff_spec env sigma = function
+  | Computational t -> Computational (ic_unsafe env sigma t)
+  | Morphism t -> Morphism (ic_unsafe env sigma t)
   | Abstract -> Abstract
 
 
 let set_once s r v =
   if Option.is_empty !r then r := Some v else error (s^" cannot be set twice")
 
-let process_ring_mods l =
+let process_ring_mods bl l =
   let kind = ref None in
   let set = ref None in
   let cst_tac = ref None in
@@ -633,12 +631,15 @@ let process_ring_mods l =
   let sign = ref None in
   let power = ref None in
   let div = ref None in
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
+  let sigma, (_, ((env, ctx), _)) = Constrintern.interp_context_evars env sigma bl in
   List.iter(function
-      Ring_kind k -> set_once "ring kind" kind (ic_coeff_spec k)
+      Ring_kind k -> set_once "ring kind" kind (ic_coeff_spec env sigma k)
     | Const_tac t -> set_once "tactic recognizing constants" cst_tac t
     | Pre_tac t -> set_once "preprocess tactic" pre t
     | Post_tac t -> set_once "postprocess tactic" post t
-    | Setoid(sth,ext) -> set_once "setoid" set (ic_unsafe sth,ic_unsafe ext)
+    | Setoid(sth,ext) -> set_once "setoid" set (ic_unsafe env sigma sth,ic_unsafe env sigma ext)
     | Pow_spec(t,spec) -> set_once "power" power (t,spec)
     | Sign_spec t -> set_once "sign" sign t
     | Div_spec t -> set_once "div" div t) l;
@@ -647,7 +648,7 @@ let process_ring_mods l =
 
 let add_theory id rth l =
   let (sigma, rth) = ic rth in
-  let (k,set,cst,pre,post,power,sign, div) = process_ring_mods l in
+  let (k,set,cst,pre,post,power,sign, div) = process_ring_mods [] l in
   add_theory0 id (sigma, rth) set k cst (pre,post) power sign div
 
 (*****************************************************************************)
@@ -946,17 +947,20 @@ let process_field_mods l =
   let sign = ref None in
   let power = ref None in
   let div = ref None in
+  let env = Global.env () in
+  let sigma = Evd.from_env env in
+  let sigma, (_, ((env, ctx), _)) = Constrintern.interp_context_evars env sigma [] in
   List.iter(function
-      Ring_mod(Ring_kind k) -> set_once "field kind" kind (ic_coeff_spec k)
+      Ring_mod(Ring_kind k) -> set_once "field kind" kind (ic_coeff_spec env sigma k)
     | Ring_mod(Const_tac t) ->
         set_once "tactic recognizing constants" cst_tac t
     | Ring_mod(Pre_tac t) -> set_once "preprocess tactic" pre t
     | Ring_mod(Post_tac t) -> set_once "postprocess tactic" post t
-    | Ring_mod(Setoid(sth,ext)) -> set_once "setoid" set (ic_unsafe sth,ic_unsafe ext)
+    | Ring_mod(Setoid(sth,ext)) -> set_once "setoid" set (ic_unsafe env sigma sth,ic_unsafe env sigma ext)
     | Ring_mod(Pow_spec(t,spec)) -> set_once "power" power (t,spec)
     | Ring_mod(Sign_spec t) -> set_once "sign" sign t
     | Ring_mod(Div_spec t) -> set_once "div" div t
-    | Inject i -> set_once "infinite property" inj (ic_unsafe i)) l;
+    | Inject i -> set_once "infinite property" inj (ic_unsafe env sigma i)) l;
   let k = match !kind with Some k -> k | None -> Abstract in
   (k, !set, !inj, !cst_tac, !pre, !post, !power, !sign, !div)
 

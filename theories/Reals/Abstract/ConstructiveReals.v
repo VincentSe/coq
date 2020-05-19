@@ -534,6 +534,8 @@ Proof.
   apply (CRisRingExt R).
 Qed.
 
+Add Parametric Ring CRRing (R : ConstructiveReals) : (CRisRing R).
+
 Instance CRplus_morph_T
   : forall {R : ConstructiveReals}, CMorphisms.Proper
       (CMorphisms.respectful (CReq R) (CMorphisms.respectful (CReq R) (CReq R))) (CRplus R).

@@ -409,7 +409,7 @@ let setoid_of_relation env evd a r =
     let evd, trans = Rewrite.get_transitive_proof env evd a r in
     evd, lapp coq_mk_Setoid [|a ; r ; refl; sym; trans |]
   with Not_found ->
-    error "cannot find setoid relation"
+    CErrors.user_err (str "Cannot find a setoid structure for relation " ++ pr_econstr_env env evd r ++ str ".")
 
 let op_morph r add mul opp req m1 m2 m3 =
   lapp coq_mk_reqe [| r; add; mul; opp; req; m1; m2; m3 |]
@@ -432,20 +432,20 @@ let ring_equality env evd (r,add,mul,opp,req) =
         let evd, setoid = setoid_of_relation env evd r req in
         let signature = [Some (r,Some req);Some (r,Some req)],Some(r,Some req) in
         let add_m, add_m_lem =
-          try Rewrite.default_morphism signature add
+          try Rewrite.default_morphism_env env evd signature add
           with Not_found ->
-            error "ring addition should be declared as a morphism" in
+            CErrors.user_err (str "Ring addition " ++ pr_econstr_env env evd add ++ str " should be declared as a morphism.") in
         let mul_m, mul_m_lem =
-          try Rewrite.default_morphism signature mul
+          try Rewrite.default_morphism_env env evd signature mul
           with Not_found ->
-            error "ring multiplication should be declared as a morphism" in
+            CErrors.user_err (str "Ring multiplication " ++ pr_econstr_env env evd mul ++ str " should be declared as a morphism.") in
         let op_morph =
           match opp with
             | Some opp ->
                 (let opp_m,opp_m_lem =
-                  try Rewrite.default_morphism ([Some(r,Some req)],Some(r,Some req)) opp
+                  try Rewrite.default_morphism_env env evd ([Some(r,Some req)],Some(r,Some req)) opp
                   with Not_found ->
-                    error "ring opposite should be declared as a morphism" in
+                    CErrors.user_err (str "Ring opposite " ++ pr_econstr_env env evd opp ++ str " should be declared as a morphism.") in
                 let op_morph =
                   op_morph r add mul opp req add_m_lem mul_m_lem opp_m_lem in
                   Flags.if_verbose
@@ -640,6 +640,13 @@ let add_theory id rth l =
   let evd = Evd.from_env env in
   let (evd, rth) = ic env evd rth in
   let (env,evd,k,set,cst,pre,post,power,sign, div) = process_ring_mods env evd [] l in
+  add_theory0 env evd id (evd, rth) set k cst (pre,post) power sign div
+
+let add_parametric_theory id bl rth l =
+  let env = Global.env () in
+  let evd = Evd.from_env env in
+  let (env,evd,k,set,cst,pre,post,power,sign, div) = process_ring_mods env evd bl l in
+  let (evd, rth) = ic env evd rth in
   add_theory0 env evd id (evd, rth) set k cst (pre,post) power sign div
 
 (*****************************************************************************)

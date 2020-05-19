@@ -90,6 +90,8 @@ END
 VERNAC COMMAND EXTEND AddSetoidRing CLASSIFIED AS SIDEFF
   | [ "Add" "Ring" ident(id) ":" constr(t) ring_mods_opt(l) ] ->
     { add_theory id t (Option.default [] l) }
+  | [ "Add" "Parametric" "Ring" ident(id) binders(b) ":" constr(t) ring_mods_opt(l) ] ->
+    { add_parametric_theory id b t (Option.default [] l) }
   | [ "Print" "Rings" ] => { Vernacextend.classify_as_query } -> {
     print_rings ()
   }

@@ -22,6 +22,12 @@ val add_theory :
   constr_expr ->
   constr_expr ring_mod list -> unit
 
+val add_parametric_theory :
+  Id.t ->
+  Constrexpr.local_binder_expr list ->
+  constr_expr ->
+  constr_expr ring_mod list -> unit
+
 val print_rings : unit -> unit
 
 val ring_lookup :

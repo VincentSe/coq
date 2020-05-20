@@ -534,8 +534,6 @@ Proof.
   apply (CRisRingExt R).
 Qed.
 
-Add Parametric Ring CRRing (R : ConstructiveReals) : (CRisRing R).
-
 Instance CRplus_morph_T
   : forall {R : ConstructiveReals}, CMorphisms.Proper
       (CMorphisms.respectful (CReq R) (CMorphisms.respectful (CReq R) (CReq R))) (CRplus R).
@@ -571,13 +569,18 @@ Proof.
   intros R x y exy z t ezt. unfold CRminus. rewrite exy,ezt. reflexivity.
 Qed.
 
+Add Parametric Ring CRRing (R : ConstructiveReals) : (CRisRing R).
+
 Lemma CRopp_involutive : forall {R : ConstructiveReals} (r : CRcarrier R),
     - - r == r.
 Proof.
-  intros. apply (CRplus_eq_reg_l (CRopp R r)).
+  intros. ring.
+(*
+  apply (CRplus_eq_reg_l (CRopp R r)).
   transitivity (CR_of_Q R 0). apply CRisRing.
   apply CReq_sym. transitivity (r + - r).
   apply CRisRing. apply CRisRing.
+*)
 Qed.
 
 Lemma CRopp_gt_lt_contravar

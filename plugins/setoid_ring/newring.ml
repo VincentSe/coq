@@ -451,18 +451,18 @@ let ring_equality env evd (r,add,mul,opp,req) =
                   Flags.if_verbose
                     Feedback.msg_info
                     (str"Using setoid \""++ pr_econstr_env env evd req++str"\""++spc()++
-                        str"and morphisms \""++pr_econstr_env env evd add_m_lem ++
-                        str"\","++spc()++ str"\""++pr_econstr_env env evd mul_m_lem++
-                        str"\""++spc()++str"and \""++pr_econstr_env env evd opp_m_lem++
+                        str"and morphisms \""++pr_econstr_env env evd add_m ++
+                        str"\","++spc()++ str"\""++pr_econstr_env env evd mul_m++
+                        str"\""++spc()++str"and \""++pr_econstr_env env evd opp_m++
                         str"\"");
                   op_morph)
             | None ->
                 (Flags.if_verbose
                     Feedback.msg_info
                     (str"Using setoid \""++pr_econstr_env env evd req ++str"\"" ++ spc() ++
-                        str"and morphisms \""++pr_econstr_env env evd add_m_lem ++
+                        str"and morphisms \""++pr_econstr_env env evd add_m ++
                         str"\""++spc()++str"and \""++
-                        pr_econstr_env env evd mul_m_lem++str"\"");
+                        pr_econstr_env env evd mul_m++str"\"");
                  op_smorph r add mul req add_m_lem mul_m_lem) in
           (setoid,op_morph)
 

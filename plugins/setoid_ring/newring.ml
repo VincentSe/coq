@@ -622,7 +622,9 @@ let process_ring_mods env evd bl l =
   let sign = ref None in
   let power = ref None in
   let div = ref None in
-  let evd, (_, ((env, ctx), _)) = Constrintern.interp_context_evars env evd bl in
+  let evd, (_, ((_, ctx), _)) = Constrintern.interp_context_evars env evd bl in
+  let ctx = List.map (Context.Named.Declaration.of_rel_decl (function Name id -> id | Anonymous -> error "Unnamed binder.")) ctx in
+  let env = EConstr.push_named_context ctx env in
   List.iter(function
       Ring_kind k -> set_once "ring kind" kind (ic_coeff_spec env evd k)
     | Const_tac t -> set_once "tactic recognizing constants" cst_tac t
@@ -638,8 +640,8 @@ let process_ring_mods env evd bl l =
 let add_theory id rth l =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let (evd, rth) = ic env evd rth in
   let (env,evd,k,set,cst,pre,post,power,sign, div) = process_ring_mods env evd [] l in
+  let (evd, rth) = ic env evd rth in
   add_theory0 env evd id (evd, rth) set k cst (pre,post) power sign div
 
 let add_parametric_theory id bl rth l =
